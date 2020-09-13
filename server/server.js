@@ -3,9 +3,11 @@ var server = require('net').createServer(aedes.handle)
 var port = 1883
 
 
-aedes.authenticate = function(client, clientId, token, callback) {
+aedes.authenticate = function(client, username, password, callback) {
 	console.log('Client connected. Login ...');
-	callback(null,clientId==="domvel");
+	console.log(username);
+	console.log(password.toString());
+	callback(null,username==="domvel");
 }
 
 server.listen(port, function() {
