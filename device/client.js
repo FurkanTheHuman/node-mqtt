@@ -1,7 +1,7 @@
 var mqtt = require('mqtt');
 const { exit } = require('process');
 
-
+var SmartSimulatetor = require('./plug_simulator.js')
 
 var readline = require('readline');
 var rl = readline.createInterface(process.stdin, process.stdout);
@@ -92,12 +92,7 @@ var client = mqtt.connect('mqtt://'+host+':'+port+'/',
 
 );
 
-// this function is for retrying connection in a  
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}   
+
 client.on('error', (err) => {
     console.log('error code', err.code);
     if(err.code === 'ECONNREFUSED'){
@@ -105,15 +100,20 @@ client.on('error', (err) => {
     }
     if(err.code === 5)
       console.log(warning("Connection refused. Wrong token or client"));
-    console.log("retrying connection");
+
+    if(err.code === 4)
+      console.log(warning("Client already connected"));
+  console.log("retrying connection");
   });
 
 
 client.on('connect', function () {
   client.subscribe('test');
-  client.subscribe('/device/'+ deviceId);
+  client.subscribe('device/'+ deviceId);
   client.publish('test', 'Hello mqtt');
 })
+
+
 
 client.on('message', function (topic, message) {
   // message is Buffer
