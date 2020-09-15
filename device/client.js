@@ -1,7 +1,7 @@
 var mqtt = require('mqtt');
 const { exit } = require('process');
 
-var SmartSimulatetor = require('./plug_simulator.js')
+var SmartPlug = require('./plug_simulator.js')
 
 var readline = require('readline');
 var rl = readline.createInterface(process.stdin, process.stdout);
@@ -12,12 +12,8 @@ var rl = readline.createInterface(process.stdin, process.stdout);
 // COLORS
 
 Reset = "\x1b[0m"
-Bright = "\x1b[1m"
-Dim = "\x1b[2m"
 Underscore = "\x1b[4m"
-Blink = "\x1b[5m"
-Reverse = "\x1b[7m"
-Hidden = "\x1b[8m"
+
 
 FgBlack = "\x1b[30m"
 FgRed = "\x1b[31m"
@@ -27,16 +23,6 @@ FgBlue = "\x1b[34m"
 FgMagenta = "\x1b[35m"
 FgCyan = "\x1b[36m"
 FgWhite = "\x1b[37m"
-
-BgBlack = "\x1b[40m"
-BgRed = "\x1b[41m"
-BgGreen = "\x1b[42m"
-BgYellow = "\x1b[43m"
-BgBlue = "\x1b[44m"
-BgMagenta = "\x1b[45m"
-BgCyan = "\x1b[46m"
-BgWhite = "\x1b[47m"
-
 // COLORS END 
 
 /// COLOR FUNCS
@@ -73,7 +59,9 @@ const host = args[3]
 const port = args[4]
 const deviceId = args[5]
 const token = args[6]
-var socketState = null
+
+
+
 
 if(typeof socketCount != 'number'){
   console.log("socket count arg should be a positive integer")
@@ -82,6 +70,8 @@ else{
   socketState = new Array(socketCount).fill(false);
 }
 
+plug = new SmartPlug(socketCount)
+var buffer = null
 
 var client = mqtt.connect('mqtt://'+host+':'+port+'/',
 {
@@ -111,21 +101,37 @@ client.on('connect', function () {
   client.subscribe('test');
   client.subscribe('device/'+ deviceId);
   client.publish('test', 'Hello mqtt');
+  setInterval(()=> {
+    var payload = {
+      "socket_count": plug.socketCount,
+      "voltage": plug.getVoltage(),
+      "power": plug.getPower(),
+      "total_power": plug.getTotalPower()
+    }
+    buffer = payload
+    client.publish('device/'+ deviceId, JSON.stringify(payload));
+
+  }, plug.interval * 1000)
+
 })
 
 
 
 client.on('message', function (topic, message) {
-  // message is Buffer
-  console.log('From topic: '+topic+'\nMessage: '+ message.toString());
-  rl.prompt()
-  //client.end();
+//
 });
 
-
-
-
-
+function print_buffer(buf, interval) {
+  if(buf === null)
+    {
+      console.log("buffering... ",  "[Interval = "+Math.floor(interval)+"]" )
+      return
+    }
+  for (let i = 0; i < socketCount; i++) {
+    console.log("> socket-"+(i+1)+" :" + (buffer['voltage'][i]==-1?info("OFF"): info(buffer['voltage'][i]))+ "  Power : "+ (buffer['voltage'][i]<=0? 0 : buffer['power'][i]) )
+}
+console.log("Total Power: " + buffer["total_power"])
+}
 
 
 console.log(FgGreen+Underscore+'CLIENT INTERFACE IS ACTIVE', Reset)
@@ -138,15 +144,20 @@ rl.setPrompt(deviceId+'> ');
 rl.prompt();
 rl.on('line', function(line) {
     if (line === "quit" || line === 'q') rl.close();
-    if (typeof parseInt(line) == 'number' && line < socketCount && line > 0){
-        console.log("hello")
+    else if (line === "show"){
+      print_buffer(buffer, plug.interval)
+    }
+    else if (typeof parseInt(line) == 'number' && line <= socketCount && line > 0){
+        /*console.log("hello")
         socketState[parseInt(line)-1] = socketState[parseInt(line-1)]? false : true;
         socketState.forEach((element, i) => {
           console.log('Socket no-'+(i+1)+':',element? info('ON'):info('OFF'))
-        });
+        });*/
+
+        plug.changeState(parseInt(line))
     }else{
-      console.log(typeof line)
       raise_error('socket number must be in range of 1 to '+ socketCount)
+      //print errors for other commands
     }
     rl.prompt();
 }).on('close',function(){

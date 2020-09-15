@@ -1,18 +1,55 @@
-var aedes = require('aedes')()
+var aedes = require('aedes')()	
+var MongoClient = require('mongodb').MongoClient;
+var url = "mongodb://localhost:27017/iot";
 var server = require('net').createServer(aedes.handle)
+
 var port = 1883
 
-var accepted_clients = [
+
+var accepted_clients = [// these are demo clients. rest are in the MongoDB
 	{'clientId': 'tester9000', 'token':'allow', 'is_connected': false, 'generalId': null},
 	{'clientId': 'tester9001', 'token':'allow', 'is_connected': false, 'generalId': null},
 	{'clientId': 'tester9002', 'token':'allow', 'is_connected': false, 'generalId': null},
 	{'clientId': 'tester9003', 'token':'allow', 'is_connected': false, 'generalId': null}
 ]
+MongoClient.connect(url,{
+	useNewUrlParser: true,
+	useUnifiedTopology: true
+  }, function(err, db) {
+	if (err) throw err;
+	var dbo = db.db("iot");
+	dbo.createCollection("clients", function(err, res) {
+	  if (err && err.code==48) {
+		console.log("'client' collection found!")	
+	} else if (err){
+		throw err;		
+	}else{
+		console.log("Collection created!");
+	}
+
+
+	  //db.close();
+	});  
+	dbo.collection("clients").find({}).toArray(function(err, result) {
+		if (err) throw err;
+		result[0]['clients'].forEach(element => {
+			console.log(typeof element['clientId'])
+			accepted_clients.push({'clientId': element['clientId'] +'', 'token': element['token'], 'is_connected': false, 'generalId': null})
+		});
+
+	db.close();
+		
+	});
+
+});
+
+
 
 process.on('SIGINT', function() {
     console.log("\nCaught interrupt signal");
 	// for a  smarter shutdown procedure 
 	// pending...
+	console.log(accepted_clients)
    
     process.exit();
 });
@@ -23,8 +60,12 @@ aedes.authenticate = function(client, username, password, callback) {
 	//console.log(username);
 	var selected_client = accepted_clients.find((obj) => {
 		return obj['clientId'] === username && obj['token'] === password.toString();
-
 	})
+
+	aedes.subscribe('device/'+selected_client['clientId'], function(packet,cb){
+		console.log(packet.payload.toString())
+	})
+
 	//console.log(password.toString());
 	if (selected_client !== undefined) {
 		console.log(selected_client);

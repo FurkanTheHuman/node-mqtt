@@ -15,7 +15,6 @@ module.exports  = class SmartPlug {
                 this.turnedOnSocket[i] = false
             } else if(this.voltage_state[i] !== -1){
                 this.voltage_state[i] = (Math.random() * 20 + 200) 
-                console.log(this.turnedOnSocket)
             }
             else{
                 this.voltage_state[i] = -1 
@@ -38,12 +37,19 @@ module.exports  = class SmartPlug {
         }
 
     getTotalPower(){
-        return this.getPower().reduce((elem, acu) => {
-            return elem + acu;
+        var total = this.getPower().filter((e) => {return e !== -1})
+        
+        if (!Array.isArray(total) || !total.length) {
+            return 0
+          
+        }
+        
+        return total.reduce((elem, acu) => {
+                return elem + acu;
         })
     }
-    changeState(socket, state){
-        this.voltage_state[socket-1] = (state == 'ON'? 0 : -1 )
+    changeState(socket){
+        this.voltage_state[socket-1] = this.voltage_state[socket-1] == 0 ? -1:0//(state == 'ON'? 0 : -1 )
         this.turnedOnSocket[socket-1] = true
     }
 
