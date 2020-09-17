@@ -16,11 +16,13 @@ Of course this requeires mongod active
 
 If you just want to test it you can use hard coded token and deviceId's
 
-`var accepted_clients = [// these are demo clients. rest are in the MongoDB
+`var accepted_clients = [
+
 	{'clientId': 'tester9000', 'token':'allow'},
 	{'clientId': 'tester9001', 'token':'allow'},
 	{'clientId': 'tester9002', 'token':'allow'},
 	{'clientId': 'tester9003', 'token':'allow'}
+
 ]`
 
 
