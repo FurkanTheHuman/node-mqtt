@@ -6,13 +6,13 @@ This repo contains 4 projects.
 * An api enpoint (/api)
 * A user interface
 
-for connecting the broker you need to create, you need to send a post request to the api 
-for createing tokens. You can use this.
+For connecting the broker, you need to send a post request to the api. 
+For createing tokens. You can use this.
 
 `curl -d '{"email":"new_user@h.com","password":"1559"}'  -H "Content-Type: application/json" -X POST http://localhost:8080/api/users`
 
 Returned email and password can be used as clientId and token.
-Of course this requeires mongod active
+Of course this requires mongod active
 
 If you just want to test it you can use hard coded token and deviceId's
 
