@@ -22,6 +22,8 @@
     "type": "git",
     "url": "git@github.com:coreui/coreui-free-react-admin-template.git"
   },
+  "proxy": "http://localhost:8080",
+
   "dependencies": {
     "@coreui/chartjs": "^2.0.0",
     "@coreui/coreui": "^3.2.2",
@@ -35,6 +37,7 @@
     "core-js": "^3.6.5",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.2",
+    "http-proxy-middleware": "^1.0.5",
     "node-sass": "^4.14.1",
     "prop-types": "^15.7.2",
     "react": "^16.13.1",

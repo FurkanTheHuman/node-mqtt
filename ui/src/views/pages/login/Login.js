@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {Component } from 'react';
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 
@@ -18,75 +18,69 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 
-const Login = () => {
-    const [loginInfo, setInfo] = useState({name:"test",email:"", password:""})
 
-    useEffect(()=> {
-        console.log('loginInfo')
-        console.log(loginInfo)
-        
-        const fetchData = async () => {
-            console.log('posted')
-            const result = await axios.post('http://localhost:8080/api/users/', loginInfo)
+
+export default class Login extends Component {
+    constructor(props) {
+      super(props)
+      this.state = {
+        email : '',
+        password: ''
+      };
+    }
+  
+    handleInputChange = (event) => {
+      const { value, name } = event.target;
+      this.setState({
+        [name]: value
+      });
+    }
+  
+    onSubmit = (event) => {
+      event.preventDefault();
+      fetch('/api/authenticate', {
+        method: 'POST',
+        body: JSON.stringify(this.state),
+        headers: {
+          'Content-Type': 'application/json'
         }
-        if(loginInfo["email"] !== "" && loginInfo["password"] !== "" )
-            fetchData()
-    })
-
-  return (
-    <div className="c-app c-default-layout flex-row align-items-center">
-      <CContainer>
-        <CRow className="justify-content-center">
-          <CCol md="8">
-            <CCardGroup>
-              <CCard className="p-4">
-                <CCardBody>
-                  <CForm>
-                    <h1>Login</h1>
-                    <p className="text-muted">Sign In to your account</p>
-                    <CInputGroup className="mb-3">
-                      <CInputGroupPrepend>
-                        <CInputGroupText>
-                          <CIcon name="cil-user" />
-                        </CInputGroupText>
-                      </CInputGroupPrepend>
-                      <CInput id="email" type="text" placeholder="Email" autoComplete="email" />
-                    </CInputGroup>
-                    <CInputGroup className="mb-4">
-                      <CInputGroupPrepend>
-                        <CInputGroupText>
-                          <CIcon name="cil-lock-locked" />
-                        </CInputGroupText>
-                      </CInputGroupPrepend>
-                      <CInput id="pass" type="password" placeholder="Password" autoComplete="current-password" />
-                    </CInputGroup>
-                    <CRow>
-                      <CCol xs="6">
-                        <CButton color="primary" className="px-4"  onClick={()=> setInfo({"email":document.getElementById("email").value, "password": document.getElementById("pass").value})}>Login</CButton>
-                      </CCol>
-                  
-                    </CRow>
-                  </CForm>
-                </CCardBody>
-              </CCard>
-              <CCard className="text-white bg-primary py-5 d-md-down-none" style={{ width: '44%' }}>
-                <CCardBody className="text-center">
-                  <div>
-                    <h2>Sign up</h2>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut
-                      labore et dolore magna aliqua.</p>
-                    <Link to="/register">
-                      <CButton color="primary" className="mt-3" active tabIndex={-1}>Register Now!</CButton>
-                    </Link>
-                  </div>
-                </CCardBody>
-              </CCard>
-            </CCardGroup>
-          </CCol>
-        </CRow>
-      </CContainer>
-    </div>
-  )
-}
-
-export default Login
+      })
+      .then(res => {
+        if (res.status === 200) {
+          this.props.history.push('/');
+        } else {
+          const error = new Error(res.error);
+          throw error;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error logging in please try again');
+      });
+    }
+  
+    render() {
+      return (
+        <form onSubmit={this.onSubmit}>
+          <h1>Login Below!</h1>
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter email"
+            value={this.state.email}
+            onChange={this.handleInputChange}
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Enter password"
+            value={this.state.password}
+            onChange={this.handleInputChange}
+            required
+          />
+          <input type="submit" value="Submit"/>
+        </form>
+      );
+    }
+  }

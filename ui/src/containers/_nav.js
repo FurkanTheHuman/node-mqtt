@@ -11,6 +11,16 @@ export default [
   },
   {
     _tag: 'CSidebarNavTitle',
+    _children: ['Menu']
+  },
+  {
+    _tag: 'CSidebarNavItem',
+    name: 'Cihazlar',
+    to: '/theme/colors',
+    icon: 'cil-drop',
+  },
+  {
+    _tag: 'CSidebarNavTitle',
     _children: ['Theme']
   },
   {

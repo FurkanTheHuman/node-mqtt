@@ -1,5 +1,53 @@
 var User = require('../models/userModel');// Handle index actions
+const jwt = require('jsonwebtoken');
 
+const secret = 'aaa';
+
+
+exports.auth = function(req, res) {
+    const { email, password } = req.body;
+    
+    console.log(req.body)
+    console.log(email, password)
+    User.findOne({ email }, function(err, user) {
+      if (err) {
+        console.error(err);
+        res.status(500)
+          .json({
+          error: 'Internal error please try again'
+        });
+      } else if (!user) {
+        res.status(401)
+          .json({
+            error: 'Incorrect email or password'
+          });
+      } else {
+        user.isCorrectPassword(password, function(err, same) {
+          if (err) {
+            res.status(500)
+              .json({
+                error: 'Internal error please try again'
+            });
+          } else if (!same) {
+            res.status(401)
+              .json({
+                error: 'Incorrect email or password'
+            });
+          } else {
+            // Issue token
+            const payload = { email };
+            const token = jwt.sign(payload, secret, {
+              expiresIn: '30d'
+            });
+            console.log({token})
+            res.cookie('token', token, { httpOnly: true })
+              //.sendStatus(200);
+              res.json({ token });
+          }
+        });
+      }
+    });
+  }
 
 exports.index = function (req, res) {
     User.get(function (err, users) {

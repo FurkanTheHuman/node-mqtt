@@ -19,7 +19,7 @@ exports.index = function (req, res) {
 exports.new = function (req, res) {
     var token = new Token();
     console.log(req.body)
-    token.accepted_token = req.body.token;
+    token.accepted_token = req.body.accepted_token;
 
     token.save(function (err) {
         if (err)

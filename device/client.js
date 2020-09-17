@@ -4,6 +4,7 @@ const { exit } = require('process');
 var SmartPlug = require('./plug_simulator.js')
 
 var readline = require('readline');
+const { parse } = require('path');
 var rl = readline.createInterface(process.stdin, process.stdout);
 
 
@@ -82,7 +83,7 @@ var client = mqtt.connect('mqtt://'+host+':'+port+'/',
 
 );
 
-
+var int_kill;
 client.on('error', (err) => {
     console.log('error code', err.code);
     if(err.code === 'ECONNREFUSED'){
@@ -93,28 +94,43 @@ client.on('error', (err) => {
 
     if(err.code === 4)
       console.log(warning("Client already connected"));
-  console.log("retrying connection");
+    if(int_kill){
+        clearInterval(int_kill)
+    }
+    console.log("retrying connection");
   });
 
 
 client.on('connect', function () {
-  client.subscribe('test');
+    console.log("connect run should be once")
   client.subscribe('device/'+ deviceId);
-  client.publish('test', 'Hello mqtt');
-  setInterval(()=> {
+  int_kill = setInterval(()=> {
     var payload = {
-      "socket_count": plug.socketCount,
-      "voltage": plug.getVoltage(),
-      "power": plug.getPower(),
-      "total_power": plug.getTotalPower()
-    }
+        type:"message",
+        message:{
+      socket_count: plug.socketCount,
+      voltage: plug.getVoltage(),
+      power: plug.getPower(),
+      total_power: plug.getTotalPower()
+    }}
+  client.publish('device/'+ deviceId, JSON.stringify(payload));
     buffer = payload
-    client.publish('device/'+ deviceId, JSON.stringify(payload));
-
   }, plug.interval * 1000)
+  var payload = {type:"event",event: "connected"}
+
+  client.publish('device/'+ deviceId, JSON.stringify(payload));
 
 })
 
+client.subscribe('device/'+ deviceId, (packet)=>{
+    var message = JSON.parse(packet.payload.toString())
+    if(message && message['type'] == 'plug') {
+        plug.changeState(parseInt(message['number']))
+        client.publish('device/'+ deviceId, JSON.stringify({type:'event', event:(plug.voltage_state[parseInt(message['number'])-1] < 0?"plugOff":"plugOn")}));    
+
+    }
+    
+})
 
 
 client.on('message', function (topic, message) {
@@ -128,7 +144,7 @@ function print_buffer(buf, interval) {
       return
     }
   for (let i = 0; i < socketCount; i++) {
-    console.log("> socket-"+(i+1)+" :" + (buffer['voltage'][i]==-1?info("OFF"): info(buffer['voltage'][i]))+ "  Power : "+ (buffer['voltage'][i]<=0? 0 : buffer['power'][i]) )
+    console.log("> socket-"+(i+1)+" :" + (buf['message']['voltage'][i]==-1?info("OFF"): info(buf['message']['voltage'][i]))+ "  Power : "+ (buffer['message']['voltage'][i]<=0? 0 : buffer['message']['power'][i]) )
 }
 console.log("Total Power: " + buffer["total_power"])
 }
@@ -136,8 +152,10 @@ console.log("Total Power: " + buffer["total_power"])
 
 console.log(FgGreen+Underscore+'CLIENT INTERFACE IS ACTIVE', Reset)
 console.log(FgGreen+'To turn ON or OFF a socket, type the socket number', Reset)
+console.log(FgGreen+'type "show" to see state of device', Reset)
 console.log(FgGreen+`Available socket range is ${FgRed}1${Reset} ${FgGreen}to${Reset} ${FgRed}`+ socketCount, Reset)
 console.log(FgGreen+`For stopping client either use ${Underscore}ctrl-c${Reset}${FgGreen} or enter \'q\' to the prompt `, Reset)
+
 
 /// test
 rl.setPrompt(deviceId+'> ');
@@ -145,6 +163,7 @@ rl.prompt();
 rl.on('line', function(line) {
     if (line === "quit" || line === 'q') rl.close();
     else if (line === "show"){
+        console.log(buffer)
       print_buffer(buffer, plug.interval)
     }
     else if (typeof parseInt(line) == 'number' && line <= socketCount && line > 0){
@@ -155,12 +174,20 @@ rl.on('line', function(line) {
         });*/
 
         plug.changeState(parseInt(line))
+        client.publish('device/'+ deviceId, JSON.stringify({type:'event', event:(plug.voltage_state[parseInt(line)-1] < 0?"plugOff":"plugOn")}));
+        
     }else{
       raise_error('socket number must be in range of 1 to '+ socketCount)
       //print errors for other commands
     }
     rl.prompt();
 }).on('close',function(){
-    process.exit(0);
+    var payload = {type:"event",event: "disconnected"}
+
+    client.publish('device/'+ deviceId, JSON.stringify(payload), ()=>{
+        setTimeout(()=>process.exit(0), 1000)
+    });
+    console.log('object')
 });
 /// test
+

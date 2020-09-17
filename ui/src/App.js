@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import { HashRouter, Route, Switch } from 'react-router-dom';
+import { HashRouter, Route, Switch, Redirect } from 'react-router-dom';
 import './scss/style.scss';
+import withAuth from './withAuth';
 
 
 const loading = (
@@ -18,7 +19,47 @@ const Register = React.lazy(() => import('./views/pages/register/Register'));
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'));
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'));
 
+function PrivateRoute ({component: Component, authed, ...rest}) {
+    return (
+      <Route
+        {...rest}
+        render={(props) => authed === true
+          ? <Component {...props} />
+          : <Redirect to={{pathname: '/login', state: {from: props.location}}} />}
+      />
+    )
+  }
+
 class App extends Component {
+    constructor(props){
+        super(props);
+        this.state = {
+            authed:false
+        }
+    }
+    componentDidMount(){
+        var ss = !this.state.authed? fetch('/checkToken', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(res => {
+            if (res.status === 200) {
+                console.log("objectsss1212")
+                return true;
+            } else {
+              const error = new Error(res.error);
+                return false;
+            }
+          })
+          .catch(err => {
+            console.error(err);
+
+
+        }):true;
+        this.setState({authed:ss})
+    }
 
   render() {
     return (
@@ -29,7 +70,7 @@ class App extends Component {
               <Route exact path="/register" name="Register Page" render={props => <Register {...props}/>} />
               <Route exact path="/404" name="Page 404" render={props => <Page404 {...props}/>} />
               <Route exact path="/500" name="Page 500" render={props => <Page500 {...props}/>} />
-              <Route path="/" name="Home" render={props => <TheLayout {...props}/>} />
+              <Route path="/" name="Home" component={withAuth(TheLayout)} />
             </Switch>
           </React.Suspense>
       </HashRouter>

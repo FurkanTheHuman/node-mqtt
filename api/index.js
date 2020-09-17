@@ -6,10 +6,13 @@ var port = process.env.PORT || 8080;// Send message for default URL
 // Import Body parser
 let bodyParser = require('body-parser');
 let mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
+var withAuth = require('./middleware');
 
 var cors = require('cors');
 
 app.use(cors());
+app.use(cookieParser());
 
 app.use(bodyParser.urlencoded({
    extended: true
@@ -30,7 +33,13 @@ else
 
 let apiRoutes = require("./routes")
 app.use('/api', apiRoutes)
+app.get('/secret', withAuth, function(req, res) {
+    res.send('The asdasd is potato');
+  });
 
+app.get('/checkToken', withAuth, function(req, res) {
+    res.sendStatus(200);
+})
 app.listen(port, function () {
      console.log("Running RestHub on port " + port);
 });

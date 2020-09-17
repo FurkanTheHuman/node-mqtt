@@ -1,7 +1,7 @@
 module.exports  = class SmartPlug {
     constructor(socketCount){
         this.socketCount = socketCount
-        this.interval = Math.random() * 25 + 5
+        this.interval = Math.random() * 10 + 5
         this.turnedOnSocket = new Array(this.socketCount).fill(false) 
         this._current = 0.1 // this is for calculating power
         this.voltage_state = new Array(this.socketCount).fill(-1) 
@@ -49,7 +49,7 @@ module.exports  = class SmartPlug {
         })
     }
     changeState(socket){
-        this.voltage_state[socket-1] = this.voltage_state[socket-1] == 0 ? -1:0//(state == 'ON'? 0 : -1 )
+        this.voltage_state[socket-1] = this.voltage_state[socket-1] >= 0 ? -1:0//(state == 'ON'? 0 : -1 )
         this.turnedOnSocket[socket-1] = true
     }
 

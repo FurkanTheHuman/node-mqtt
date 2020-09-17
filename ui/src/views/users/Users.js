@@ -10,6 +10,7 @@ import {
   CRow,
   CPagination
 } from '@coreui/react'
+import axios from 'axios'
 
 import usersData from './UsersData'
 
@@ -24,7 +25,7 @@ const getBadge = status => {
 }
 
 const Users = () => {
-  const history = useHistory()
+  /*const history = useHistory()
   const queryPage = useLocation().search.match(/page=([0-9]+)/, '')
   const currentPage = Number(queryPage && queryPage[1] ? queryPage[1] : 1)
   const [page, setPage] = useState(currentPage)
@@ -36,6 +37,25 @@ const Users = () => {
   useEffect(() => {
     currentPage !== page && setPage(currentPage)
   }, [currentPage, page])
+*/
+const [data, setData] = useState({"users":[]});
+    useEffect(async () => {
+        const fetchData = async () => {
+            const result2 = await axios.get('/api/users/')
+            console.log(result2.data.data)
+            return {"users":result2.data.data};
+        }
+        var ss = fetchData().then((res)=>{
+            console.log(res)
+            return res
+        }).catch(()=>{
+            console.log("Not auth")
+        })
+
+        setData(await ss)
+        console.log(await ss)
+    }, [setData])
+    console.log(data['users'].map((e) =>  <li>{e}</li>))
 
   return (
     <CRow>
@@ -43,39 +63,9 @@ const Users = () => {
         <CCard>
           <CCardHeader>
             Users
-            <small className="text-muted"> example</small>
           </CCardHeader>
           <CCardBody>
-          <CDataTable
-            items={usersData}
-            fields={[
-              { key: 'name', _classes: 'font-weight-bold' },
-              'registered', 'role', 'status'
-            ]}
-            hover
-            striped
-            itemsPerPage={5}
-            activePage={page}
-            clickableRows
-            onRowClick={(item) => history.push(`/users/${item.id}`)}
-            scopedSlots = {{
-              'status':
-                (item)=>(
-                  <td>
-                    <CBadge color={getBadge(item.status)}>
-                      {item.status}
-                    </CBadge>
-                  </td>
-                )
-            }}
-          />
-          <CPagination
-            activePage={page}
-            onActivePageChange={pageChange}
-            pages={5}
-            doubleArrows={false} 
-            align="center"
-          />
+              {data['users'].map((e) =>  <li key={'key'+e.email}>{e.email}</li>)}
           </CCardBody>
         </CCard>
       </CCol>

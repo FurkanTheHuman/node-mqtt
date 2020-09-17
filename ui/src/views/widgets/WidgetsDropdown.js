@@ -15,23 +15,33 @@ import ChartLineSimple from '../charts/ChartLineSimple'
 import ChartBarSimple from '../charts/ChartBarSimple'
 
 const WidgetsDropdown = () => {
-    const [data, setData] = useState({ data : [] });
-    useEffect(() => {
+    const [data, setData] = useState({"users":0,"devices":0});
+    useEffect( ()=>{ (async () => {
         const fetchData = async () => {
-            const result = await axios.get('http://localhost:8080/api/device/')
-            setData(result.data)
+            const result = await axios.get('/api/device/')
+            const result2 = await axios.get('/api/users/')
+            console.log(result2.data.data)
+            return {"users":result2.data.data,"devices":result.data.data};
         }
-        fetchData()
-    }, [])
+        var ss = fetchData().then((res)=>{
+            console.log(res)
+            return res
+        }).catch(()=>{
+            console.log("Not auth")
+        })
+
+        setData(await ss)
+        console.log(await ss)
+    })()}, [setData])
     console.log('data.test')
-    console.log( data.data.length   )
+    console.log( data   )
     console.log('data.test')
   return (
     <CRow>
       <CCol sm="6" lg="3">
         <CWidgetDropdown
           color="gradient-primary"
-          header={""+data.data.length}
+          header={""+data['users'].length}
           text="Registered devices"
           footerSlot={
             <ChartLineSimple
@@ -52,7 +62,7 @@ const WidgetsDropdown = () => {
       <CCol sm="6" lg="3">
         <CWidgetDropdown
           color="gradient-info"
-          header="9.823"
+          header="0"
           text="Online devices"
           footerSlot={
             <ChartLineSimple
@@ -84,7 +94,7 @@ const WidgetsDropdown = () => {
       <CCol sm="6" lg="3">
         <CWidgetDropdown
           color="gradient-warning"
-          header="9.823"
+          header={""+data['devices'].length}
           text="Registered Users"
           footerSlot={
             <ChartLineSimple

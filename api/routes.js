@@ -5,6 +5,10 @@ let router = require('express').Router();
 var clientController = require('./controlers/clientController');
 var userController = require('./controlers/userController');
 var tokenController = require('./controlers/tokenController');
+var withAuth = require('./middleware');
+
+const IS_AUTH_ON = false
+
 
 router.get('/', function (req, res) {
     res.json({
@@ -14,10 +18,17 @@ router.get('/', function (req, res) {
 });
 
 // device routes
-router.route('/device')
-    .get(clientController.index)
-    .post(clientController.new);
-    
+if (IS_AUTH_ON) {    
+    router.route('/device')
+        .get(clientController.index)
+        .post(clientController.new);
+
+} else {
+    router.route('/device')
+        .get(withAuth,clientController.index)
+        .post(clientController.new);
+}
+
 router.route('/device/:device_id')
     .get(clientController.view)
     .patch(clientController.update)
@@ -35,7 +46,9 @@ router.route('/users/:user_id')
     .patch(userController.update)
     .put(userController.update)
     .delete(userController.delete);
-// user routes END
+router.route('/authenticate')
+    .post(userController.auth)
+    // user routes END
 
 // token routes
 router.route('/tokens')

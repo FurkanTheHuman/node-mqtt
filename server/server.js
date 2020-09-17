@@ -1,6 +1,13 @@
 var aedes = require('aedes')()	
-var MongoClient = require('mongodb').MongoClient;
+var mongoose = require('mongoose');// Setup schema
+var deviceModel = require('./model');
+var userModel = require('./userModel');
+var eventModel = require('./eventModel');
+
+
 var url = "mongodb://localhost:27017/iot";
+mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true });
+
 var server = require('net').createServer(aedes.handle)
 
 var port = 1883
@@ -12,36 +19,7 @@ var accepted_clients = [// these are demo clients. rest are in the MongoDB
 	{'clientId': 'tester9002', 'token':'allow', 'is_connected': false, 'generalId': null},
 	{'clientId': 'tester9003', 'token':'allow', 'is_connected': false, 'generalId': null}
 ]
-MongoClient.connect(url,{
-	useNewUrlParser: true,
-	useUnifiedTopology: true
-  }, function(err, db) {
-	if (err) throw err;
-	var dbo = db.db("iot");
-	dbo.createCollection("clients", function(err, res) {
-	  if (err && err.code==48) {
-		console.log("'client' collection found!")	
-	} else if (err){
-		throw err;		
-	}else{
-		console.log("Collection created!");
-	}
 
-
-	  //db.close();
-	});  
-	dbo.collection("clients").find({}).toArray(function(err, result) {
-		if (err) throw err;
-		result[0]['clients'].forEach(element => {
-			console.log(typeof element['clientId'])
-			accepted_clients.push({'clientId': element['clientId'] +'', 'token': element['token'], 'is_connected': false, 'generalId': null})
-		});
-
-	db.close();
-		
-	});
-
-});
 
 
 
@@ -49,13 +27,25 @@ process.on('SIGINT', function() {
     console.log("\nCaught interrupt signal");
 	// for a  smarter shutdown procedure 
 	// pending...
-	console.log(accepted_clients)
    
     process.exit();
 });
 
 aedes.authenticate = function(client, username, password, callback) {
-	
+    userModel.find({})
+        .exec(function (err, users) {
+            if (err) {
+                throw 'HELP'
+            }
+            
+            users.forEach((e)=>{
+                var {email, password} = e
+                accepted_clients.push(
+	                {'clientId': email, 'token':password, 'is_connected': false, 'generalId': null},
+                )
+            })
+        
+    
 	console.log('Client connected. Login ...');
 	//console.log(username);
 	var selected_client = accepted_clients.find((obj) => {
@@ -63,8 +53,42 @@ aedes.authenticate = function(client, username, password, callback) {
 	})
 
 	aedes.subscribe('device/'+selected_client['clientId'], function(packet,cb){
-		console.log(packet.payload.toString())
-	})
+        
+        //console.log(JSON.parse(packet.payload.toString())['message'])
+        var idx = packet.topic.split('/')[1]
+
+        var messagex = JSON.parse(packet.payload.toString())
+        if(messagex && messagex['type'] == 'message'){
+
+            let msg = new deviceModel({deviceId:idx, message:JSON.stringify(messagex['message'])})
+            msg.save().then((r)=>console.log(r)).catch(e=>console.log(e))
+
+        }
+        if(messagex && messagex['type'] == 'event'){
+            console.log(JSON.stringify(messagex['event']))
+
+            let msg = new eventModel({deviceId:idx, event:JSON.stringify(messagex['event'])})
+            msg.save().then((r)=>console.log(r)).catch(e=>console.log(e))
+
+        }
+        
+        else{
+            console.log(messagex)
+        }
+        /*var id = packet.topic.split('/')[1]
+        console.log(packet.payload['message'])
+        if( JSON.parse(packet.payload.toString())['message']){
+            var message = packet.payload.toString()
+            let msg = new deviceModel({deviceId:id, message:JSON.parse(message)})
+            msg.save().then((r)=>console.log(r)).catch(e=>console.log(e))
+        } else if( JSON.parse(packet.payload.toString())['event']){
+            var event = packet.payload.toString()
+            let msg = new eventModel({event:JSON.parse(event).event})
+            msg.save().then((r)=>console.log(r)).catch(e=>console.log(e))
+            
+        }
+        */
+    })
 
 	//console.log(password.toString());
 	if (selected_client !== undefined) {
@@ -85,7 +109,8 @@ aedes.authenticate = function(client, username, password, callback) {
 		var error = new Error('Auth error');
 		error.returnCode = 5
 		callback(error,null);	
-	}
+    }
+})
 
 	// two users with the same name can connect. This is a problem.
 	// Return correct error codes.
