@@ -1,10 +1,10 @@
 # FullStack mqtt server/client integration with Aedes, MongoDB and NodeJS 
 
 This repo contains 4 projects. 
-    - A device simulator (/device)
-    - An mqtt broker (/server)
-    - An api enpoint (/api)
-    - A user interface
+* A device simulator (/device)
+* An mqtt broker (/server)
+* An api enpoint (/api)
+* A user interface
 
 for connecting the broker you need to create, you need to send a post request to the api 
 for createing tokens. You can use this.
@@ -45,7 +45,7 @@ Auth is currenly closed for curl to work on and can be opened by turning IS_AUTH
 
 ### Testing
 For testing 
-    - use Postman or equivalent for api
-    - for broker use client.js
-    - for MongoDB use compass
-    - for ui don't
+* use Postman or equivalent for api
+* for broker use client.js
+* for MongoDB use compass
+* for ui don't

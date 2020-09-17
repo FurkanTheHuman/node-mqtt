@@ -1,0 +1,31 @@
+ we are in a hot spot. 
+
+
+what we know:
+there should be three pages
+users
+devices
+tokens
+
+users page will list 
+all users
+and nothing else
+
+user crud management will be made with login/register
+
+
+device page will complete all crud.
+also will implement mqtt for all messages
+server will serve mesages per device so when 
+user choses a device it will show its telemetry
+NOTE this page can't add tokens or devices
+
+
+service tokens page can add tokens and devices
+also delete operation is permitted. 
+not update
+lists all devices with their tokens.
+
+
+
+
