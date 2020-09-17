@@ -39,7 +39,7 @@ To see all api routes/urls check routes.js at api/routes.js
 
 ### FrontEnd 
 Frontend is currently not complete and stands for just to prove auth is working in the api.
-cookies hold as httpOnly and testing it at front end easier. 
+cookies hold as httpOnly and testing it at frontend is easier. 
 Auth is currenly closed for curl to work on and can be opened by turning IS_AUTH_ON variable true at api/routes.js
 
 ### Testing
