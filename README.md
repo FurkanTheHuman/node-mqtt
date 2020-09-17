@@ -7,7 +7,7 @@ This repo contains 4 projects.
 * A user interface
 
 For connecting the broker, you need to send a post request to the api. 
-For createing tokens. You can use this.
+For creating tokens. You can use this.
 
 `curl -d '{"email":"new_user@h.com","password":"1559"}'  -H "Content-Type: application/json" -X POST http://localhost:8080/api/users`
 
